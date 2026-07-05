@@ -7,7 +7,7 @@ class ApiError extends Error{
         statuscode,
         message = "something went wrong",
         errors= [],
-        statck =""
+        stack =""
     ){   //to overwrite we call super
 
         super(messaage)
