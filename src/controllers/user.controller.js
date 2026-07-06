@@ -36,15 +36,17 @@ const registerUser = asyncHandler(async (req, res)=>{
 
         
 
-        const avatarLocalPath = req.files?.avatar[0]?.path;
-        const coverImagepath = req.files?.coverImage[0]?.path;
+        const avatarLocalPath = req.files?.avatar?.[0]?.path;
+        const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
 
         if(!avatarLocalPath) {
             throw new ApiError(400, "Avatar File is comoulsory field");
         }
 
+        
+
         const avatar = await uploadOnCloudinary(avatarLocalPath);
-        const coverImage = await uploadOnCloudinary(coverImagepath);
+        const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
         if(!avatar) throw new ApiError(400, "Avatar file is compulsory mannn");
 
