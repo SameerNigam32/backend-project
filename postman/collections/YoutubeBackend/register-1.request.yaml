@@ -1,0 +1,40 @@
+$kind: http-request
+name: register
+url: "{{server}}/users/register"
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: fullname
+      value: sking
+      description: ""
+      disabled: false
+    - type: text
+      key: password
+      value: "12443"
+      description: ""
+      disabled: false
+    - type: text
+      key: username
+      value: samerniga11
+      description: ""
+      disabled: false
+    - type: file
+      key: avatar
+      src:
+        - /C:/Users/SAMEER/Pictures/Screenshots/Screenshot 2026-07-06 115553.png
+      description: ""
+      disabled: false
+    - type: file
+      key: coverImage
+      src:
+        - /C:/Users/SAMEER/Pictures/Screenshots/Screenshot 2026-05-15 063213.png
+      description: ""
+      disabled: false
+    - type: text
+      key: email
+      value: sn@gma.n
+      description: ""
+      disabled: false
+order: 4457498665088970
