@@ -3,7 +3,7 @@ import fs from "fs";    //file system open read write etc
 
 
 cloudinary.config({ 
-        cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
+        cloud_name: process.env.CLOUDINARY_CLOUD, 
         api_key: process.env.CLOUDINARY_API_KEY, 
         api_secret: process.env.CLOUDINARY_API_SECRET
     });
@@ -16,12 +16,12 @@ const uploadOnCloudinary = async (localFilePath) =>{
         if(!localFilePath) return null; //if path does not exist
 
         const response = await cloudinary.uploader.upload(localFilePath, {
-            resource_type="auto"
+            resource_type:"auto"
         })
         //file uploaded  
         console.log('file has been uploaded seuccesfully on cloudinary', response.url);
         return response;
-    }catch(error){
+    }catch(error){console.error("Cloudinary upload failed:", error.message);
         fs.unlinkSync(localFilePath); 
         // as the local file which is saved in server temporarily failed, we remove that from the server
         return null;
@@ -30,6 +30,7 @@ const uploadOnCloudinary = async (localFilePath) =>{
 }
 
 export {uploadOnCloudinary }
+
 
 
 

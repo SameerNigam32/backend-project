@@ -38,7 +38,7 @@ const userSchema = new Schema({
     
     watchHistory :[{
         type : Schema.Types.ObjectId,
-        ref="Video"
+        ref: "Video"
     }],
 
     password : {
@@ -58,11 +58,10 @@ const userSchema = new Schema({
 
 
 //also encryption is a long process so async required, also needs to know the context
-userSchema.pre("save", async function(next){ //execute this just before save event
-    if(! this.isModified("password")) return next();
+userSchema.pre("save", async function(){ //execute this just before save event
+    if(! this.isModified("password")) return;
     
     this.password= await bcrypt.hash(this.password, 10)
-    next()
 })     
 
 
@@ -77,10 +76,10 @@ userSchema.methods.isPasswordCorrect = async function(password){
 userSchema.methods.generateAccessToken= function(){
     return jwt.sign(
         {
-            _id=this._id,
-            email = this.email,
-            username = this.username,
-            fullname = this.fullname
+            _id: this._id,
+            email: this.email,
+            username: this.username,
+            fullname: this.fullname
         },
         process.env.ACCESS_TOKEN_SECRET,
         {
@@ -92,7 +91,7 @@ userSchema.methods.generateAccessToken= function(){
 userSchema.methods.generateRefreshToken = function(){
     return jwt.sign(
         {
-            _id=this._id,
+            _id: this._id,
         },
         process.env.REFRESH_TOKEN_SECRET,
         {

@@ -10,7 +10,7 @@ class ApiError extends Error{
         stack =""
     ){   //to overwrite we call super
 
-        super(messaage)
+        super(message)
         this.statuscode=statuscode
         this.data=null
         this.message=message

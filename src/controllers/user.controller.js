@@ -1,6 +1,5 @@
 import { ApiError } from "../utils/ApiErrors.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../utils/ApiErrors.js";
 import {User} from "../models/user.model.js";//User directly interacts with mongodb 
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -16,18 +15,18 @@ const registerUser = asyncHandler(async (req, res)=>{
         //check for user creation 
         //return res
 
-        const {fullName, email, username, password}=req.body;
+        const {fullname, email, username, password}=req.body;
         console.log("email:", email);
 
 
         if(
-            [fullName, email, username, password].some((field)=> 
+            [fullname, email, username, password].some((field)=> 
                 field?.trim()==="")
         ){
             throw new ApiError(400, "fileds are empty");
         }
 
-        const existingUser= User.findOne({
+        const existingUser= await User.findOne({
             $or: [{ username}, { email }]
         }
         )
@@ -44,14 +43,14 @@ const registerUser = asyncHandler(async (req, res)=>{
             throw new ApiError(400, "Avatar File is comoulsory field");
         }
 
-        const avatar = uploadOnCloudinary(avatarLocalPath);
-        const coverImage = uploadOnCloudinary(coverImagepath);
+        const avatar = await uploadOnCloudinary(avatarLocalPath);
+        const coverImage = await uploadOnCloudinary(coverImagepath);
 
         if(!avatar) throw new ApiError(400, "Avatar file is compulsory mannn");
 
 
         const user = await User.create({    //db in in different continent 
-            fullName,
+            fullname,
             avatar : avatar.url,
             coverImage : coverImage?.url||"", //if DNE then empty string
             email,
