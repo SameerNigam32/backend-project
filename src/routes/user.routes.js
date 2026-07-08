@@ -18,9 +18,6 @@ router.route("/register").post(
             maxCount : 3
         }
     ])
-    
-    
-    
     ,registerUser);
 
 
