@@ -3,6 +3,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import {User} from "../models/user.model.js";//User directly interacts with mongodb 
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { trusted } from "mongoose";
 
 
 const generateAccessAndRefreshToken = async(userId) =>{
@@ -151,9 +152,33 @@ const loginUser = asyncHandler( async (req, res) =>{
 
 const logoutUser = asyncHandler ( async (req, res) =>{
  //while logging out, we dont ask username password request from the user, so how
-  
+ //verifyJWT middleware is ran before logout which automatically gives us acces to the req.user
+    await User.findById(
+        req.user._id,
+        {
+            $set : {
+                refreshToken : undefined           //the fileds to be updated in mongodb
+            }
+        },
+        {
+            new : true
+        }
+    )
+
+    const options = {
+        httpOnly : true,
+        secure : true
+    }
+
+    return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, {}, "user logged out "));
+
+
 })
 
 
 
-export {registerUser, loginUser} 
+export {registerUser, loginUser, logoutUser} 
