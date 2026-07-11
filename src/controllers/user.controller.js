@@ -3,18 +3,19 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import {User} from "../models/user.model.js";//User directly interacts with mongodb 
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { trusted } from "mongoose";
-
+import jwt from "jsonwebtoken";
 
 const generateAccessAndRefreshToken = async(userId) =>{
     try{
-        const user = User.findById(userId);
+        const user = await User.findById(userId);
+        if (!user) throw new ApiError(404, "user not found");
+
         const accessToken = user.generateAccessToken()
         const refreshToken = user.generateRefreshToken()
 
         user.refreshToken = refreshToken;
         //while saving complete user model wil start to validate that this and that required so to skip it
-        user.save({ validateBeforeSave : false })
+        await user.save({ validateBeforeSave : false })
 
         return {accessToken, refreshToken};
 
@@ -22,8 +23,6 @@ const generateAccessAndRefreshToken = async(userId) =>{
         throw new ApiError(500, "something went wrong while generating access and refresh tokens");
     }
 }
-
-
 
 const registerUser = asyncHandler(async (req, res)=>{
         //take input form the user
@@ -36,14 +35,11 @@ const registerUser = asyncHandler(async (req, res)=>{
         //check for user creation 
         //return res
 
-        const {fullname, email, username, password}=req.body;
+        const {fullname, email, username, password}=req.body || {};
         console.log("email:", email);
 
 
-        if(
-            [fullname, email, username, password].some((field)=> 
-                field?.trim()==="")
-        ){
+        if([fullname, email, username, password].some((field)=> !field || field.trim()==="")){
             throw new ApiError(400, "fileds are empty");
         }
 
@@ -95,9 +91,8 @@ const registerUser = asyncHandler(async (req, res)=>{
         )
 })
 
-
 const loginUser = asyncHandler( async (req, res) =>{
-        //tak einput user req
+        //take input user req
         //check whether username or email exists
         //find user
         //check password
@@ -105,12 +100,13 @@ const loginUser = asyncHandler( async (req, res) =>{
         //send to user via cookies
         //
 
-        const {email, username, password} = req.body;
+        const {email, username, password} = req.body || {};
 
-        if(!username || !email) throw new ApiError(400, "username or email req");
+        if(!(username || email)) throw new ApiError(400, "username or email req");
+        if(!password) throw new ApiError(400, "password req");
 
         const user = await User.findOne({
-            $or : [{username, email}]
+            $or : [{ username }, { email }]
         })
 
 
@@ -153,12 +149,12 @@ const loginUser = asyncHandler( async (req, res) =>{
 const logoutUser = asyncHandler ( async (req, res) =>{
  //while logging out, we dont ask username password request from the user, so how
  //verifyJWT middleware is ran before logout which automatically gives us acces to the req.user
-    await User.findById(
+    await User.findByIdAndUpdate(
         req.user._id,
         {
-            $set : {
-                refreshToken : undefined           //the fileds to be updated in mongodb
-            }
+            $unset : {
+                refreshToken : 1           //the field to be removed from mongodb
+            },
         },
         {
             new : true
@@ -179,6 +175,60 @@ const logoutUser = asyncHandler ( async (req, res) =>{
 
 })
 
+const refreshAcessToken = asyncHandler ( async (req, res)=>{
+    
+    try {
+        // step1 - get the refresh token via cookies for dekstop or body for mobile
+        const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
+    
+        //if token DNE, error
+        if(! incomingRefreshToken) throw new ApiError(401, "unauthorized request");
+        
+        //the cookie has got the encrypted refresh token but we need raw refresh token to get the user  
+        const decodedToken = jwt.verify(
+            incomingRefreshToken,
+            process.env.REFRESH_TOKEN_SECRET)
+        
+        //step 2 - get the user from the db
+        //as the payload data of refresh token we stored id of the user
+        const user = await User.findById(decodedToken?._id);
+    
+        if(!user) throw new ApiError(401, "invalid refresh token"); //no corresponding user so obviously 
+    
+        //step 3 - compare the refresh tokens 
+        if(incomingRefreshToken !== user?.refreshToken) 
+            throw new ApiError(401,"refresh token is expired or used");
+    
+        //step 4 - now genrating new access and refresh token and sending it via the cookie as well as updating in the backend as well
+    
+        const options={
+            httpOnly : true,
+            secure : true
+        }
+    
+        const {accessToken, newRefreshToken} = await generateAccessAndRefreshToken(user._id);
+    
+        return res
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", newRefreshToken, options)
+        .json(
+            new ApiResponse(
+                200,
+                {accessToken, refreshToken:newRefreshToken},
+                "access token refreshed successfully"
+             )
+        )
+    } catch (error) {
+        throw new ApiError(400,error?.message || "invalid refresh token");
+    }
 
 
-export {registerUser, loginUser, logoutUser} 
+
+
+
+
+})
+
+
+export {registerUser, loginUser, logoutUser, refreshAcessToken} 

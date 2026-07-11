@@ -15,10 +15,10 @@ export const verifyJWT = asyncHandler (async (req, _, next) =>{
         const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ","")
     
         if(!token) throw new ApiError(401, "unauthorized request");
-    
+        
+        //decode the token to get the user as raw access token has userid in its payload
         const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
-    
-        const user = await User.findById(decodedToken?._id).select("-password -refreshToken")    //while generating accesstoken we returned id in it so we can access
+        const user = await User.findById(decodedToken?._id).select("-password -refreshToken")    
     
         if(!user) {
             throw new ApiError(401, "invalid Access Token")
@@ -29,7 +29,7 @@ export const verifyJWT = asyncHandler (async (req, _, next) =>{
 
 
     } catch (error) {
-        throw new ApiError(401, error?mesage : "invalid message token" )
+        throw new ApiError(401, error?.message || "invalid access token" )
     }
 
     

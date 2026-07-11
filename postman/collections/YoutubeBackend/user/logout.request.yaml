@@ -1,0 +1,39 @@
+$kind: http-request
+name: logout
+description: ""
+url: "{{server}}/users/logout"
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: fullname
+      value: sking
+      description: ""
+      disabled: true
+    - type: text
+      key: password
+      value: "12443"
+      description: ""
+      disabled: false
+    - type: text
+      key: username
+      value: ranbirkapoor
+      description: ""
+      disabled: false
+    - type: file
+      key: avatar
+      src: []
+      description: ""
+      disabled: true
+    - type: file
+      key: coverImage
+      src: []
+      description: ""
+      disabled: true
+    - type: text
+      key: email
+      value: rk
+      description: ""
+      disabled: false
+order: 2436969010263149
