@@ -261,4 +261,28 @@ const getCurrentUser = asyncHandler(async (req, res)=>{
 
 })
 
+const updateAccountDetails = asyncHandler(async (req, res)=>{
+     const {fullname, email} = req.body || {};
+
+     if(!fullname && !email) throw new ApiError(400, "atleast one field is required to update");
+
+     const user = User.findByIdAndUpdate(
+        req.user?._id,
+        {   fullname : fullname
+            , email
+        },
+        {
+            new: true, runValidators: true
+        }
+     );
+
+     return res
+     .status(200)
+     .json(
+         new ApiResponse(200, user, "account details updated successfully")
+     )
+})
+
+
+
 export {registerUser, loginUser, logoutUser, refreshAcessToken, changeCurrentPassword, getCurrentUser} 
