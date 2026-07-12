@@ -25,6 +25,7 @@ export const verifyJWT = asyncHandler (async (req, _, next) =>{
         }
     
         req.user=user; //we added new object to the req which is user
+        //so if the user is logged in then we can access the user object in the req object in any route handler
         next()          //which will be used by logout
 
 

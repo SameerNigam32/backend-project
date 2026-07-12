@@ -52,7 +52,7 @@ const registerUser = asyncHandler(async (req, res)=>{
         }
 
         
-
+        //multer middleware will add the files to the req.files object, so we can access the files from there
         const avatarLocalPath = req.files?.avatar?.[0]?.path;
         const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
 
@@ -268,13 +268,16 @@ const updateAccountDetails = asyncHandler(async (req, res)=>{
 
      const user = User.findByIdAndUpdate(
         req.user?._id,
-        {   fullname : fullname
-            , email
+        {   
+            $set:{
+                fullname : fullname
+                , email
+            }
         },
         {
             new: true, runValidators: true
         }
-     );
+     ).select("-password");
 
      return res
      .status(200)
@@ -283,6 +286,26 @@ const updateAccountDetails = asyncHandler(async (req, res)=>{
      )
 })
 
+const updateAvatar = asyncHandler(async (req,res)=>{
+     const avatarLocalPath = req.file?.path
+     if(!avatarLocalPath) throw new ApiError(400, "avatar file is required");
+
+     const avatar = await uploadOnCloudinary(avatarLocalPath);
+     if(!avatar) throw new ApiError(500, "something went wrong while uploading avatar");
+
+     const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set : {
+                avatar : avatar.url
+            }
+        },
+        {
+            new : true
+        }
+    ).select("-password")
+})
 
 
-export {registerUser, loginUser, logoutUser, refreshAcessToken, changeCurrentPassword, getCurrentUser} 
+
+export {registerUser, loginUser, logoutUser, refreshAcessToken, changeCurrentPassword, getCurrentUser, updateAccountDetails, updateAvatar} 

@@ -11,11 +11,11 @@ const storage = multer.diskStorage({
     cb(null, file.originalname)
     // is same name file upploaded by user, itll overwrite so keep file.fieldname + '-' + uniqueSuffix
   }
-})
+}) //returns a storage engine which will be used by multer to store the files in the disk
 
 export const upload = multer({
      storage
-    })
+    }) 
 
 
 
