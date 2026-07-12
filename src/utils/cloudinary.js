@@ -31,7 +31,31 @@ const uploadOnCloudinary = async (localFilePath) =>{
      
 }
 
-export {uploadOnCloudinary }
+const getPublicIdFromUrl = (cloudinaryUrl) => {
+    try {
+        const url = new URL(cloudinaryUrl);
+        const uploadPath = url.pathname.split("/upload/")[1];
+        if(!uploadPath) return null;
+
+        const publicIdWithExtension = uploadPath
+            .split("/")
+            .filter((part) => !part.match(/^v\d+$/))
+            .join("/");
+
+        return publicIdWithExtension.replace(/\.[^/.]+$/, "");
+    } catch (error) {
+        return null;
+    }
+}
+
+const deleteFromCloudinary = async (cloudinaryUrl) => {
+    const publicId = getPublicIdFromUrl(cloudinaryUrl);
+    if(!publicId) return null;
+
+    return await cloudinary.uploader.destroy(publicId);
+}
+
+export {uploadOnCloudinary, deleteFromCloudinary }
 
 
 

@@ -1,7 +1,7 @@
 import { ApiError } from "../utils/ApiErrors.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {User} from "../models/user.model.js";//User directly interacts with mongodb 
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 
@@ -266,7 +266,7 @@ const updateAccountDetails = asyncHandler(async (req, res)=>{
 
      if(!fullname && !email) throw new ApiError(400, "atleast one field is required to update");
 
-     const user = User.findByIdAndUpdate(
+     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {   
             $set:{
@@ -289,9 +289,14 @@ const updateAccountDetails = asyncHandler(async (req, res)=>{
 const updateAvatar = asyncHandler(async (req,res)=>{
      const avatarLocalPath = req.file?.path
      if(!avatarLocalPath) throw new ApiError(400, "avatar file is required");
+     //we will upload the avatar to cloudinary and get the url of the uploaded avatar
 
      const avatar = await uploadOnCloudinary(avatarLocalPath);
      if(!avatar.url) throw new ApiError(500, "something went wrong while uploading avatar");
+
+     const currentUser = await User.findById(req.user?._id).select("avatar");
+     //we need to delete the old avatar from cloudinary, so we fetch the current user and get the avatar url from it
+     if(!currentUser) throw new ApiError(404, "user not found");
 
      const user = await User.findByIdAndUpdate(
         req.user?._id,
@@ -305,10 +310,18 @@ const updateAvatar = asyncHandler(async (req,res)=>{
         }
     ).select("-password")
 
+    if(currentUser.avatar) { 
+        try {
+            await deleteFromCloudinary(currentUser.avatar);
+        } catch (error) {
+            console.error("Old avatar delete failed:", error.message);
+        }
+    }
+
     return res
     .status(200)
     .json(
-         ApiResponse(200, user ,"avatar updated successfully")
+         new ApiResponse(200, user ,"avatar updated successfully")
     )
 })
 
