@@ -230,5 +230,25 @@ const refreshAcessToken = asyncHandler ( async (req, res)=>{
 
 })
 
+const changeCurrentPassword = asyncHandler(async (req, res)=>{
+    
+    const {oldPassword, newPassword} = req.body || {};
+    //as the user is already logged in, we can get the user from the req.user that is set by the verifyJWT middleware
+    const user =  await User.findById(req.user?._id);
+
+    const isPaswordCorrect = await user.isPasswordCorrect(oldPassword);
+
+    if(!isPaswordCorrect) throw new ApiError(401, "old password is incorrect");
+
+    user.password = newPassword;
+    await user.save({validateBeforeSave : false}); //we dont want to validate the user model again, as we are only changing the password
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,{},"password changed successfully")
+    )
+})
+
 
 export {registerUser, loginUser, logoutUser, refreshAcessToken} 
