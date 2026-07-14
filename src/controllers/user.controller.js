@@ -352,5 +352,79 @@ const updateCoverImage = asyncHandler(async (req,res)=>{
 })
 
 
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+    //to get the channel profile of a user, we need to get the user id from the params and then fetch the user from the db and return it, user is the channel owner, and we also need to get the number of subscribers of the channel and whether the current user is subscribed to the channel or not
+    const {username} = req.params || {};
+    //params are the values that are passed in the url, for example /user/:username, here username is the param and we can access it via req.params.username
 
-export {registerUser, loginUser, logoutUser, refreshAcessToken, changeCurrentPassword, getCurrentUser, updateAccountDetails, updateAvatar, updateCoverImage} 
+    if(!username?.trim()) throw new ApiError(400, "username is required");
+    //trim is used to remove the whitespace from the string, if the username is empty or only contains whitespace, we throw an error
+
+    const channel = await User.aggregate([
+        {
+            $match : {
+                username : username.toLowerCase()
+
+            }//here i only have one document that matches the username, so i will get only one document in the result
+        },{
+            //id here is the id of the user/channel the current logged in user has asked for
+            $lookup :{
+                from : "subscriptions",  //the model where we aee looking for the data 
+                localField : "_id", //the field in the user model that we are matching with the foreign field
+                foreignField : "channel", //the field in the subscription model that we are matching with the local field
+                as : "subscribers" //the name of the field that will be added to the user model, which will contain the array of subscribers, it is an array of objects of subscription model, each object will contain the all the subscriber ids where the channel id matches the id of the user/channel current logged in user is looking for
+            }
+
+        },{
+            $lookup:{
+                from:"subscriptions",
+                localField : "_id",
+                foreignField : "subscriber",
+                as : "subscribedTo"
+            }
+        },{
+            $addFields : {
+                subscriberCount : { 
+                    $size : "$subscribers"
+                },
+                subscribedToCount : {
+                    $size : "$subscribedTo"
+                },
+                isSubscribed : { //whether the current logged in user has sibscribed the channel he or she is visiting
+                    $cond : {
+                        if : { $in: [req.user?._id, "$subscribers.subscriber"] },
+                        //works for both then adn else
+                        then : true,
+                        else : false 
+                    }
+
+                }
+            }
+        },
+        {
+            $project : { //giving only the required fied to the frontend
+                fullname : 1,
+                username : 1,
+                subscriberCount : 1,
+                subscribedToCount : 1,
+                isSubscribed : 1,
+                avatar : 1,
+                coverImage : 1,
+                email : 1,
+                createdAt : 1 //created at is the date when the user was created, we can use it to show how long the user has been on the platform
+             }
+        }
+    ])
+   // aggregate returns an array of matched values, here we search for a single chaneel so we get a single document in the array
+   if(!channel?.length) throw new ApiError(400, "channel DNE!!!" )
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, channel[0], "user channel fetched succesfully"))
+    
+})
+
+
+
+
+export {registerUser, loginUser, logoutUser, refreshAcessToken, changeCurrentPassword, getCurrentUser, updateAccountDetails, updateAvatar, updateCoverImage, getUserChannelProfile} 
