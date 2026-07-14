@@ -351,7 +351,6 @@ const updateCoverImage = asyncHandler(async (req,res)=>{
     )
 })
 
-
 const getUserChannelProfile = asyncHandler(async (req, res) => {
     //to get the channel profile of a user, we need to get the user id from the params and then fetch the user from the db and return it, user is the channel owner, and we also need to get the number of subscribers of the channel and whether the current user is subscribed to the channel or not
     const {username} = req.params || {};
@@ -424,7 +423,57 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     
 })
 
+const getWatchHistory = asyncHandler ( async(req, res)=>{
+
+    const user = await User.aggregate([
+        {
+            $match : {
+                _id : new mongoose.Types.objectId(req.user?._id) // we need to convert the string id to object id, as the _id field in mongodb is of type object id 
+            }
+        },
+        {
+            $lookup : {
+                from : "videos",
+                localField : "watchHistory",
+                foreignField : "_id",
+                as : "watchHistory",//here we got the documents of all the videos that the user has watched
+                pipeline : [
+                    {
+                        $lookup : {
+                            from : "users",
+                            localField : "owner",
+                            foreignField : "_id",
+                            as : "owner",
+                            pipeline : [ //we need to get the owner of the video, so we need to lookup the user model and get the owner of the video
+                                {
+                                    $project : {
+                                        fullname :1 ,
+                                        email : 1,
+                                        avatar : 1,
+                                        username : 1
+                                    }
+                                },
+                                {
+                                    $add : {
+                                        owner : {
+                                            $fisrt : "$owner" //we need to get the first element of the owner array, as we are looking for a single user, so we will get only one document in the owner array
+                                        }
+                                    }
+                                }
+                            ] 
+                        }
+                    }
+                ]
+            } 
+        }
 
 
+    ])
 
-export {registerUser, loginUser, logoutUser, refreshAcessToken, changeCurrentPassword, getCurrentUser, updateAccountDetails, updateAvatar, updateCoverImage, getUserChannelProfile} 
+    return res
+    .status(200)
+    .json(new ApiResponse(200, user[0 ].getWatchHistory, "watch history fetche succefully "))
+}) 
+
+
+export {registerUser, loginUser, logoutUser, refreshAcessToken, changeCurrentPassword, getCurrentUser, updateAccountDetails, updateAvatar, updateCoverImage, getUserChannelProfile, getWatchHistory} 
