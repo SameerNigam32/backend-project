@@ -351,7 +351,7 @@ const updateCoverImage = asyncHandler(async (req,res)=>{
     )
 })
 
-const getUserChannelProfile = asyncHandler(async (req, res) => {
+const getChannelProfile = asyncHandler(async (req, res) => {
     //to get the channel profile of a user, we need to get the user id from the params and then fetch the user from the db and return it, user is the channel owner, and we also need to get the number of subscribers of the channel and whether the current user is subscribed to the channel or not
     const {username} = req.params || {};
     //params are the values that are passed in the url, for example /user/:username, here username is the param and we can access it via req.params.username

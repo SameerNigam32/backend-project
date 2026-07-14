@@ -8,6 +8,8 @@ import { User } from "../models/user.model.js";
 
 
 export const verifyJWT = asyncHandler (async (req, _, next) =>{
+//verifyjwt actually is used to verify the access token and get the user from the access token and attach it to the req object so that we can use it in the route handler, its also used to check whether the user is logged in or not, if the user is not logged in then it will throw an error and the route handler will not be executed
+
 
 //req has cookeie access becuase of app.use(cookieParser())
 //in mobile apps we generally send an authorization header and its value is Bearer <accessToken>
