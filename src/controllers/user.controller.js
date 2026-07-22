@@ -237,15 +237,20 @@ const refreshAcessToken = asyncHandler ( async (req, res)=>{
 const changeCurrentPassword = asyncHandler(async (req, res)=>{
     
     const {oldPassword, newPassword} = req.body || {};
+    if(!oldPassword || !newPassword) {
+        throw new ApiError(400, "oldPassword and newPassword are required");
+    }
+
     //as the user is already logged in, we can get the user from the req.user that is set by the verifyJWT middleware
     const user =  await User.findById(req.user?._id);
+    if(!user) throw new ApiError(404, "user not found");
 
     const isPaswordCorrect = await user.isPasswordCorrect(oldPassword);
 
     if(!isPaswordCorrect) throw new ApiError(401, "old password is incorrect");
 
     user.password = newPassword;
-    await user.save({validateBeforeSave : false}); //we dont want to validate the user model again, as we are only changing the password
+    await user.save(); //runs the password hashing middleware
 
     return res
     .status(200)
@@ -336,6 +341,8 @@ const updateCoverImage = asyncHandler(async (req,res)=>{
      const coverImage = await uploadOnCloudinary(coverImageLocalPath);
      if(!coverImage.url) throw new ApiError(500, "something went wrong while uploading cover image");
 
+     const currentUser = await User.findById(req.user?._id).select("coverImage");
+
      const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
@@ -347,6 +354,14 @@ const updateCoverImage = asyncHandler(async (req,res)=>{
             new : true
         }
     ).select("-password")
+
+    if(currentUser.coverImage) { 
+        try {
+            await deleteFromCloudinary(currentUser.coverImage);
+        } catch (error) {
+            console.error("Old cover image delete failed:", error.message);
+        }
+    }
 
     return res
     .status(200)
