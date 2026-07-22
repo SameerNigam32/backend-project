@@ -4,6 +4,7 @@ import {User} from "../models/user.model.js";//User directly interacts with mong
 import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 const generateAccessAndRefreshToken = async(userId) =>{
     try{
@@ -112,7 +113,7 @@ const loginUser = asyncHandler( async (req, res) =>{
 
         if(!user) throw new ApiError(404, "user not found");
 
-        //User is the mongodb User that is findOne and otehr methods will be used on this User, 
+        //User is the mongodb User that is findOne and mongodb methods will be used on this User, 
         //whereas our user that we have stored ,that will work with the methods that we have defined on the user models
 
         const isValidPassword = await user.isPasswordCorrect(password);
@@ -456,7 +457,7 @@ const getWatchHistory = asyncHandler ( async(req, res)=>{
                                 {
                                     $add : {
                                         owner : {
-                                            $fisrt : "$owner" //we need to get the first element of the owner array, as we are looking for a single user, so we will get only one document in the owner array
+                                            $first : "$owner" //we need to get the first element of the owner array, as we are looking for a single user, so we will get only one document in the owner array
                                         }
                                     }
                                 }
@@ -472,7 +473,7 @@ const getWatchHistory = asyncHandler ( async(req, res)=>{
 
     return res
     .status(200)
-    .json(new ApiResponse(200, user[0 ].getWatchHistory, "watch history fetche succefully "))
+    .json(new ApiResponse(200, user[0].getWatchHistory, "watch history fetche succefully "))
 }) 
 
 
