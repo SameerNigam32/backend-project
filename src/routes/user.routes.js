@@ -28,7 +28,7 @@ router.route('/login').post(upload.none(), loginUser)
 //first verify user via verifyJWT auth middleware
 router.route("/logout").post(verifyJWT,logoutUser)
 
-router.route("refresh_token").post(refreshAcessToken);
+router.route("/refresh_token").post(refreshAcessToken);
 
 router.route("/change_Password").post(verifyJWT, changeCurrentPassword);
 

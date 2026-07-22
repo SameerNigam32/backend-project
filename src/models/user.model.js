@@ -59,7 +59,7 @@ const userSchema = new Schema({
 //also encryption is a long process so async required, also needs to know the context
 //before saving the user model we need to hash the password so that it is not stored in plain text in the database
 userSchema.pre("save", async function(){ //execute this just before save event
-    if(! this.isModified("password")) return next(); //if password is not modified then no need to hash it again
+    if(! this.isModified("password")) return; //if password is not modified then no need to hash it again
     
     
     this.password= await bcrypt.hash(this.password, 10)

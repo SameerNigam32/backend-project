@@ -21,7 +21,10 @@ const generateAccessAndRefreshToken = async(userId) =>{
         return {accessToken, refreshToken};
 
     }catch(error){
-        throw new ApiError(500, "something went wrong while generating access and refresh tokens");
+        throw new ApiError(
+            500,
+            error?.message || "something went wrong while generating access and refresh tokens"
+        );
     }
 }
 
@@ -207,7 +210,7 @@ const refreshAcessToken = asyncHandler ( async (req, res)=>{
             secure : true
         }
     
-        const {accessToken, newRefreshToken} = await generateAccessAndRefreshToken(user._id);
+        const {accessToken, refreshToken: newRefreshToken} = await generateAccessAndRefreshToken(user._id);
     
         return res
         .status(200)
